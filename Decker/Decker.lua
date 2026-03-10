@@ -36,9 +36,7 @@ local function FindLayoutIndexByName(layoutName)
 
     for i, layout in ipairs(layouts.layouts) do
         if layout.layoutName == layoutName then
-            local resolvedIndex = layout.layoutIndex or i
-            Debug("Matched layout '" .. layoutName .. "' to layoutIndex=" .. tostring(layout.layoutIndex) .. " (arrayPosition=" .. tostring(i) .. ")")
-            return resolvedIndex  --SetActiveLayout expects layoutIndex (not array position)
+            return layout.layoutIndex or i  --SetActiveLayout expects layoutIndex (not array position)
         end
     end
 
@@ -84,4 +82,3 @@ Decker = {}  --optional public table for slash commands/other addons
 
 Decker.ApplyLayout = ApplyLayout  --expose manual reapply helper
 Decker.GetDeviceType = GetDeviceType  --expose device detection helper
-Decker.Debug = Debug  --expose debug helper for config panel logging
