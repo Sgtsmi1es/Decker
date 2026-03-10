@@ -24,7 +24,7 @@ local function FindLayoutIndexByName(layoutName)
 
     for i, layout in ipairs(layouts.layouts) do
         if layout.layoutName == layoutName then
-            return i  --index required by C_EditMode.SetActiveLayout
+            return layout.layoutIndex or i  --SetActiveLayout expects layoutIndex (not array position)
         end
     end
 
