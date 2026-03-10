@@ -1,6 +1,9 @@
 local panel = CreateFrame("Frame")  --settings panel frame shown in WoW options UI
 panel.name = "Decker"  --category label in the addon settings list
 
+-- Bounded width so descriptions wrap consistently on Deck (1280×800) and high-res; panel height from content
+local DESC_WIDTH = 280
+
 local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 title:SetPoint("TOPLEFT", 16, -16)
 title:SetText("Decker")  --header text for the settings panel
@@ -38,11 +41,56 @@ deckLabel:SetText("Steam Deck UI")
 
 local deckDropdown = CreateDropdown(deckLabel,-6)  --dropdown storing DeckerDB.deckLayoutName
 
+local deckDesc = panel:CreateFontString(nil,"ARTWORK","GameFontNormalSmall")
+deckDesc:SetPoint("TOPLEFT",deckDropdown,"BOTTOMLEFT",0,-4)
+deckDesc:SetWidth(DESC_WIDTH)
+deckDesc:SetWordWrap(true)
+deckDesc:SetText("Edit Mode layout used when playing on Steam Deck (1280×800).")
+
 local desktopLabel = panel:CreateFontString(nil,"ARTWORK","GameFontNormal")
-desktopLabel:SetPoint("TOPLEFT",deckDropdown,"BOTTOMLEFT",16,-20)
+desktopLabel:SetPoint("TOPLEFT",deckDesc,"BOTTOMLEFT",0,-16)
 desktopLabel:SetText("Main Computer UI")
 
 local desktopDropdown = CreateDropdown(desktopLabel,-6)  --dropdown storing DeckerDB.desktopLayoutName
+
+local desktopDesc = panel:CreateFontString(nil,"ARTWORK","GameFontNormalSmall")
+desktopDesc:SetPoint("TOPLEFT",desktopDropdown,"BOTTOMLEFT",0,-4)
+desktopDesc:SetWidth(DESC_WIDTH)
+desktopDesc:SetWordWrap(true)
+desktopDesc:SetText("Edit Mode layout used on desktop or other resolutions.")
+
+local function CreateActionButton(anchor, x, y, width, text, onClick)
+    local btn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    btn:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", x, y)
+    btn:SetSize(width, 22)
+    btn:SetText(text)
+    btn:SetScript("OnClick", onClick)
+    return btn
+end
+
+local refreshBtn = CreateActionButton(desktopDesc, 16, -16, 140, "Refresh profiles", function()
+    InitDropdown(deckDropdown, "deckLayoutName")
+    InitDropdown(desktopDropdown, "desktopLayoutName")
+    if Decker and Decker.ApplyLayout then
+        Decker.ApplyLayout()
+    end
+end)
+
+local refreshDesc = panel:CreateFontString(nil,"ARTWORK","GameFontNormalSmall")
+refreshDesc:SetPoint("TOPLEFT",refreshBtn,"BOTTOMLEFT",0,-4)
+refreshDesc:SetWidth(DESC_WIDTH)
+refreshDesc:SetWordWrap(true)
+refreshDesc:SetText("Reload the layout list and re-apply the current selection (e.g. after creating or renaming layouts this session).")
+
+local reloadBtn = CreateActionButton(refreshDesc, 0, -16, 100, "Reload UI", function()
+    ReloadUI()
+end)
+
+local reloadDesc = panel:CreateFontString(nil,"ARTWORK","GameFontNormalSmall")
+reloadDesc:SetPoint("TOPLEFT",reloadBtn,"BOTTOMLEFT",0,-4)
+reloadDesc:SetWidth(DESC_WIDTH)
+reloadDesc:SetWordWrap(true)
+reloadDesc:SetText("Reload the game interface (same as /reload).")
 
 local function InitDropdown(dropdown,key)
 
@@ -86,5 +134,5 @@ panel:SetScript("OnShow",function()
 
 end)
 
-local category = Settings.RegisterCanvasLayoutCategory(panel,"Decker")  --register panel in Dragonflight+ Settings UI
+local category = Settings.RegisterCanvasLayoutCategory(panel,"Decker")  --register panel in WoW Settings UI
 Settings.RegisterAddOnCategory(category)  --make category visible in addon list
