@@ -28,18 +28,23 @@ local function FindLayoutIndexByName(layoutName)
     end
 
     local layouts = C_EditMode.GetLayouts()  --fetch all Edit Mode layouts from WoW
+    local layoutList = layouts and (layouts.layouts or layouts)
 
-    if not layouts or not layouts.layouts then
+    if type(layoutList) ~= "table" then
         Debug("Edit Mode layouts are unavailable right now.")
         return nil  --Edit Mode data unavailable
     end
 
-    for _, layout in ipairs(layouts.layouts) do
+    for key, layout in pairs(layoutList) do
         if layout.layoutName == layoutName then
-            local explicitIndex = layout.layoutIndex or layout.layoutID or layout.id
+            local explicitIndex = tonumber(layout.layoutIndex) or tonumber(layout.layoutID) or tonumber(layout.id)
 
             if type(explicitIndex) == "number" then
                 return explicitIndex  --prefer an explicit layout identifier returned by the API
+            end
+
+            if type(key) == "number" then
+                return key  --some client builds expose the layout index as the table key only
             end
 
             Debug("Matched layout name but no explicit index was present; probing indices via C_EditMode.GetLayoutInfo.")

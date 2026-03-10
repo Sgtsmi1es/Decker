@@ -13,10 +13,13 @@ local function GetLayoutNames()
     local names = {}  --collect all available Edit Mode layout names
 
     local layouts = C_EditMode.GetLayouts()  --query current character's saved layouts
+    local layoutList = layouts and (layouts.layouts or layouts)
 
-    if layouts and layouts.layouts then
-        for _, layout in ipairs(layouts.layouts) do
-            table.insert(names, layout.layoutName)  --store name for dropdown options
+    if type(layoutList) == "table" then
+        for _, layout in pairs(layoutList) do
+            if layout.layoutName then
+                table.insert(names, layout.layoutName)  --store name for dropdown options
+            end
         end
     end
 
@@ -68,6 +71,8 @@ local function CreateActionButton(anchor, x, y, width, text, onClick)
     return btn
 end
 
+local InitDropdown  --forward declaration so callbacks reference the local function, not a nil global
+
 local refreshBtn = CreateActionButton(desktopDesc, 16, -16, 140, "Refresh profiles", function()
     if Decker and Decker.Debug then
         Decker.Debug("Refresh profiles clicked.")
@@ -97,7 +102,7 @@ reloadDesc:SetWidth(DESC_WIDTH)
 reloadDesc:SetWordWrap(true)
 reloadDesc:SetText("Reload the game interface (same as /reload).")
 
-local function InitDropdown(dropdown,key)
+InitDropdown = function(dropdown,key)
 
     UIDropDownMenu_Initialize(dropdown,function()  --rebuild menu each time the dropdown is opened
 
