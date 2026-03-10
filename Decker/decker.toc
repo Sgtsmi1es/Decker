@@ -1,4 +1,4 @@
-## Interface: 110007
+## Interface: 120001
 ## Title: Decker
 ## Notes: Automatically switches Edit Mode layouts for Steam Deck and Desktop
 ## Author: Sgtsmi1es
