@@ -73,31 +73,12 @@ end
 
 local InitDropdown  --forward declaration so callbacks reference the local function, not a nil global
 
-local refreshBtn = CreateActionButton(desktopDesc, 16, -16, 140, "Refresh profiles", function()
-    if Decker and Decker.Debug then
-        Decker.Debug("Refresh profiles clicked.")
-    end
-
-    InitDropdown(deckDropdown, "deckLayoutName")
-    InitDropdown(desktopDropdown, "desktopLayoutName")
-
-    if Decker and Decker.ApplyLayout then
-        Decker.ApplyLayout("refresh_button")
-    end
-end)
-
-local refreshDesc = panel:CreateFontString(nil,"ARTWORK","GameFontNormalSmall")
-refreshDesc:SetPoint("TOPLEFT",refreshBtn,"BOTTOMLEFT",0,-4)
-refreshDesc:SetWidth(DESC_WIDTH)
-refreshDesc:SetWordWrap(true)
-refreshDesc:SetText("Reload the layout list and re-apply the current selection (e.g. after creating or renaming layouts this session).")
-
-local reloadBtn = CreateActionButton(refreshDesc, 0, -16, 100, "Reload UI", function()
+local reloadBtn = CreateActionButton(desktopDesc, 16, -16, 100, "Reload UI", function()
     ReloadUI()
 end)
 
-local reloadDesc = panel:CreateFontString(nil,"ARTWORK","GameFontNormalSmall")
-reloadDesc:SetPoint("TOPLEFT",reloadBtn,"BOTTOMLEFT",0,-4)
+local reloadDesc = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+reloadDesc:SetPoint("TOPLEFT", reloadBtn, "BOTTOMLEFT", 0, -4)
 reloadDesc:SetWidth(DESC_WIDTH)
 reloadDesc:SetWordWrap(true)
 reloadDesc:SetText("Reload the game interface (same as /reload).")

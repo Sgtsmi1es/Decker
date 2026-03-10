@@ -1,4 +1,5 @@
-DeckerDB = DeckerDB or {}  --persistent saved variables table for selected layout names
+DeckerDB = DeckerDB or {}
+DeckerDB.layoutList = DeckerDB.layoutList or {}
 
 local frame = CreateFrame("Frame")  --event frame used to run layout logic on login
 
@@ -10,80 +11,50 @@ end
 
 local function GetDeviceType()
 
-    local w = GetScreenWidth()  --current UI render width
     local h = GetScreenHeight()  --current UI render height
 
-    if w == 1280 and h == 800 then
+    if h == 800 then
         return "deck"  --Steam Deck resolution match
     end
 
     return "desktop"  --this will fail if the res is lower or equal to the deck res, but shouldnt be an issue in most use cases
 end
 
-local function FindLayoutIndexByName(layoutName)
-
-    if not layoutName then
-        Debug("No target layout name configured; skipping apply.")
-        return nil  --no configured layout to search for
-    end
-
-    local layouts = C_EditMode.GetLayouts()  --fetch all Edit Mode layouts from WoW
+local function RefreshLayoutList()
+    local layouts = C_EditMode.GetLayouts()
     local layoutList = layouts and (layouts.layouts or layouts)
-
-    if type(layoutList) ~= "table" then
-        Debug("Edit Mode layouts are unavailable right now.")
-        return nil  --Edit Mode data unavailable
-    end
-
+    if type(layoutList) ~= "table" then return end
+    local newList = {}
     for key, layout in pairs(layoutList) do
-        if layout.layoutName == layoutName then
-            local explicitIndex = tonumber(layout.layoutIndex) or tonumber(layout.layoutID) or tonumber(layout.id)
-
-            if type(explicitIndex) == "number" then
-                return explicitIndex  --prefer an explicit layout identifier returned by the API
-            end
-
-            if type(key) == "number" then
-                return key  --some client builds expose the layout index as the table key only
-            end
-
-            Debug("Matched layout name but no explicit index was present; probing indices via C_EditMode.GetLayoutInfo.")
-            break
-        end
-    end
-
-    -- Some clients return names from GetLayouts without a usable numeric index.
-    -- Probe the known index space and match by layout name using GetLayoutInfo(index).
-    if type(C_EditMode.GetLayoutInfo) == "function" then
-        local missesInARow = 0
-
-        for probeIndex = 0, 200 do
-            local info = C_EditMode.GetLayoutInfo(probeIndex)
-
-            if info and info.layoutName then
-                missesInARow = 0
-
-                if info.layoutName == layoutName then
-                    return probeIndex
-                end
-            else
-                missesInARow = missesInARow + 1
-
-                if missesInARow >= 20 then
-                    break  --stop once we've seen a long run of empty slots
-                end
+        if layout and layout.layoutName then
+            -- Use key as id: Blizzard may key layouts by SetActiveLayout index (e.g. 3,4,5 for custom after defaults)
+            local id = (type(key) == "number" and key) or tonumber(layout.layoutIndex) or tonumber(layout.layoutID) or tonumber(layout.id)
+            if id then
+                table.insert(newList, { name = layout.layoutName, id = id })
             end
         end
     end
-
-    Debug("Configured layout name not found: '" .. tostring(layoutName) .. "'.")
-    return nil  --named layout was not found
+    if #newList > 0 then
+        DeckerDB.layoutList = newList
+    end
 end
 
-local function ApplyLayout(trigger)
+local function FindLayoutIndexByName(layoutName)
+    if not layoutName then return nil end
+    RefreshLayoutList()
+    for _, entry in ipairs(DeckerDB.layoutList) do
+        if entry.name == layoutName then
+            return entry.id
+        end
+    end
+    return nil
+end
+
+local function ApplyLayout(trigger, retryCount)
 
     local device = GetDeviceType()  --resolve whether this client is deck or desktop
     local source = trigger or "manual"
+    retryCount = retryCount or 0
 
     local targetLayout
 
@@ -93,25 +64,25 @@ local function ApplyLayout(trigger)
         targetLayout = DeckerDB.desktopLayoutName  --use saved desktop layout name
     end
 
-    Debug("ApplyLayout(" .. source .. "): device=" .. tostring(device) .. ", targetLayout=" .. tostring(targetLayout))
+    RefreshLayoutList()
+    if targetLayout and #DeckerDB.layoutList == 0 and source == "login" and retryCount < 3 then
+        C_Timer.After((retryCount + 1) * 2, function() ApplyLayout("login", retryCount + 1) end)
+        return
+    end
 
-    local index = FindLayoutIndexByName(targetLayout)  --convert layout name to active layout index
-
+    local index = FindLayoutIndexByName(targetLayout)
     if index then
-        Debug("Calling C_EditMode.SetActiveLayout(" .. tostring(index) .. ")")
-        C_EditMode.SetActiveLayout(index)  --switch to selected Edit Mode layout
-    else
-        Debug("No layout index resolved; SetActiveLayout not called.")
+        C_EditMode.SetActiveLayout(index + 2)  -- presets 1=Modern, 2=Classic; custom layouts start at 3
+        Debug("Applied layout: " .. tostring(targetLayout))
     end
 end
 
 frame:RegisterEvent("PLAYER_LOGIN")  --run once when character enters the world
 
 frame:SetScript("OnEvent", function(_, event)
-
-    Debug("Event fired: " .. tostring(event))
-    ApplyLayout("login")  --apply the correct layout automatically at login
-
+    if event == "PLAYER_LOGIN" then
+        C_Timer.After(2, function() ApplyLayout("login") end)
+    end
 end)
 
 Decker = {}  --optional public table for slash commands/other addons

@@ -2,7 +2,7 @@
 ## Title: Decker
 ## Notes: Automatically switches Edit Mode layouts for Steam Deck and Desktop
 ## Author: Sgtsmi1es
-## Version: 0.1
+## Version: 0.2 Beta
 ## SavedVariables: DeckerDB
 
 Decker.lua
