@@ -69,10 +69,15 @@ local function CreateActionButton(anchor, x, y, width, text, onClick)
 end
 
 local refreshBtn = CreateActionButton(desktopDesc, 16, -16, 140, "Refresh profiles", function()
+    if Decker and Decker.Debug then
+        Decker.Debug("Refresh profiles clicked.")
+    end
+
     InitDropdown(deckDropdown, "deckLayoutName")
     InitDropdown(desktopDropdown, "desktopLayoutName")
+
     if Decker and Decker.ApplyLayout then
-        Decker.ApplyLayout()
+        Decker.ApplyLayout("refresh_button")
     end
 end)
 
@@ -107,6 +112,10 @@ local function InitDropdown(dropdown,key)
 
                 DeckerDB[key] = name  --persist selected layout under the provided db key
                 UIDropDownMenu_SetSelectedName(dropdown,name)  --immediately reflect current choice in UI
+
+                if Decker and Decker.Debug then
+                    Decker.Debug("Saved " .. key .. " = '" .. name .. "'.")
+                end
 
             end
 
