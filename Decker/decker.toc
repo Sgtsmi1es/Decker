@@ -1,7 +1,7 @@
 ## Interface: 110007
 ## Title: Decker
 ## Notes: Automatically switches Edit Mode layouts for Steam Deck and Desktop
-## Author: Matthew Tekker
+## Author: Sgtsmi1es
 ## Version: 0.1
 ## SavedVariables: DeckerDB
 
