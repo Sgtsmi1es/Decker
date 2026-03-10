@@ -34,9 +34,40 @@ local function FindLayoutIndexByName(layoutName)
         return nil  --Edit Mode data unavailable
     end
 
-    for i, layout in ipairs(layouts.layouts) do
+    for _, layout in ipairs(layouts.layouts) do
         if layout.layoutName == layoutName then
-            return layout.layoutIndex or i  --SetActiveLayout expects layoutIndex (not array position)
+            local explicitIndex = layout.layoutIndex or layout.layoutID or layout.id
+
+            if type(explicitIndex) == "number" then
+                return explicitIndex  --prefer an explicit layout identifier returned by the API
+            end
+
+            Debug("Matched layout name but no explicit index was present; probing indices via C_EditMode.GetLayoutInfo.")
+            break
+        end
+    end
+
+    -- Some clients return names from GetLayouts without a usable numeric index.
+    -- Probe the known index space and match by layout name using GetLayoutInfo(index).
+    if type(C_EditMode.GetLayoutInfo) == "function" then
+        local missesInARow = 0
+
+        for probeIndex = 0, 200 do
+            local info = C_EditMode.GetLayoutInfo(probeIndex)
+
+            if info and info.layoutName then
+                missesInARow = 0
+
+                if info.layoutName == layoutName then
+                    return probeIndex
+                end
+            else
+                missesInARow = missesInARow + 1
+
+                if missesInARow >= 20 then
+                    break  --stop once we've seen a long run of empty slots
+                end
+            end
         end
     end
 
@@ -82,3 +113,4 @@ Decker = {}  --optional public table for slash commands/other addons
 
 Decker.ApplyLayout = ApplyLayout  --expose manual reapply helper
 Decker.GetDeviceType = GetDeviceType  --expose device detection helper
+Decker.Debug = Debug  --expose debug output helper for config/actions
